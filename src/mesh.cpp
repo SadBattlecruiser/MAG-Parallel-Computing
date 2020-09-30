@@ -1,6 +1,7 @@
 #include "mesh.hpp"
 #include "point.hpp"
 #include "frame.hpp"
+#include "matrix.hpp"
 #include <vector>
 
 Mesh::Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const double T0, const bool Symmetry) {
@@ -36,3 +37,10 @@ Mesh::Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const dou
   else
     throw "symmetry=false in Mesh";
 };
+
+Matrix<double>& Mesh::jacobian() const {
+  unsigned size = N_xo_ * N_yo_ + N_xi_ * (N_yo_ - N_yi_); // Просто количество всех узлов
+  Matrix<double>* ret = new Matrix<double>(size, size);
+
+  return *ret;
+}

@@ -3,12 +3,15 @@
 
 #include "point.hpp"
 #include "frame.hpp"
+#include "matrix.hpp"
 
 // Класс сетки
+// Умеет считать якобиан
 class Mesh {
 public:
   // Подразумевается, что стороны выреза нацело делятся на получающиеся шаги сетки. Иначе бобо
   Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const double T0 = 0, const bool Symmetry = true);
+  Matrix<double>& jacobian() const;
 private:
   bool sym_;
   double x_step_;
