@@ -59,6 +59,7 @@ void Matrix<T>::print() const {
   cout << "IN PRINT" << endl;
   cout << "rows_: " << rows_ << " cols_: " << cols_ << endl;
   for (unsigned i = 0; i < rows_; i++) {
+    cout << i << " | ";
     for (unsigned j = 0; j < cols_; j++) {
       cout << arr_[i][j] << ' ';
     }
@@ -68,8 +69,7 @@ void Matrix<T>::print() const {
 
 template <typename T>
 void Matrix<T>::to_file(ofstream& file) const {
-  cout << "IN_FILE" << endl;
-  //cout << "rows_: " << rows_ << " cols_: " << cols_ << endl;
+  //cout << "IN_FILE" << endl;
   for (unsigned i = 0; i < rows_; i++) {
     file << arr_[i][0];
     for (unsigned j = 1; j < cols_; j++) {
@@ -84,7 +84,7 @@ void Matrix<T>::to_file(ofstream& file) const {
 
 template <typename T>
 void Matrix<T>::from_file(ifstream& file) {
-  cout << "FROM_FILE" << endl;
+  //cout << "FROM_FILE" << endl;
   for (unsigned i = 0; i < rows_; i++) {
     //file >> arr_[i][0];
     for (unsigned j = 0; j < cols_; j++) {
