@@ -11,7 +11,8 @@ void Point::print() const {
 };
 
 
-Point_T::Point_T(double x0, double y0, double T0) :
+Point_T::Point_T(unsigned node_num, double x0, double y0, double T0) :
   Point(x0, y0) {
     T = T0;
+    num = node_num;
 };

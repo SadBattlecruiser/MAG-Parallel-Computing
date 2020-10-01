@@ -4,14 +4,19 @@
 #include "point.hpp"
 #include "frame.hpp"
 #include "matrix.hpp"
+#include <vector>
+
+using namespace std;
 
 // Класс сетки
-// Умеет считать якобиан
+// Принимает геометрию, возвращает СЛАУ
 class Mesh {
 public:
   // Подразумевается, что стороны выреза нацело делятся на получающиеся шаги сетки. Иначе бобо
   Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const double T0 = 0, const bool Symmetry = true);
-  Matrix<double>& jacobian() const;
+  pair<Matrix<double>, vector<double> >& form_sle(const double T_z) const;  // Сама слау
+  void print_cheme() const;
+  ~Mesh();
 private:
   bool sym_;
   double x_step_;
@@ -21,6 +26,7 @@ private:
   unsigned N_xi_; // кол-во узлов в меньшей части рамки
   unsigned N_yo_;
   unsigned N_yi_;
+  unsigned N_nodes_; // Количество узлов всего
 };
 
 
