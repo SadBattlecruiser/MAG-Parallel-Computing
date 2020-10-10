@@ -7,6 +7,8 @@
 #include "frame.hpp"
 #include "mesh.hpp"
 
+#include <cmath>
+
 using namespace std;
 
 //double T_z = 100. + 273.15; // Температура жидкости внутри трубы
@@ -18,10 +20,10 @@ int main() {
   double side_len[] = {6., 8., 2., 4.};
   Frame tf(side_len);
   //tf.print();
-  Mesh ms(tf, 16, 12);
+  Mesh ms(tf, 8, 6);
   ms.print_cheme();
   cout << "test4\n" << endl;
-  
+
   pair<Matrix<double>, vector<double> >& sle = ms.form_sle(T_z);
   cout << "test5\n" << endl;
 
@@ -39,14 +41,28 @@ int main() {
   fout.close();
   cout << "test7\n" << endl;
 
-  Matrix<double> matr2(40, 40);
+  //vector<double>& gauss_res = gauss(sle.first, sle.second);
+  Matrix<double> test_matr(4, 4);
+  vector<double> test_vect(4);
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      test_matr[i][j] = 16 - i + j;
+    }
+    test_vect[i] = 8*i;
+  }
+  test_matr[0][0] = 10;
+  test_matr[1][1] = 11;
+  test_matr[2][2] = 12;
+
+  vector<double>& gauss_res = gauss(test_matr, test_vect);
+  cout << "test7.5\n" << endl;
+
+  /*Matrix<double> matr2(40, 40);
   ifstream fin;
   fin.open("vect_res.csv");
-  //matr2.from_file(fin);
-  //matr2.print();
   ms.from_file(fin);
   ms.print_T();
   fin.close();
   cout << "test8\n" << endl;
-  return 0;
+  return 0;*/
 };

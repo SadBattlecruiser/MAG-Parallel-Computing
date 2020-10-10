@@ -7,3 +7,6 @@ HEADERSPATH= -I .\headers # -I .\\SFML-2.5.1\\include
 
 all:
 	$(CC) src\\*.cpp -o out\\main_single.out $(HEADERSPATH)
+
+clean:
+	rm -f out\\*.o
