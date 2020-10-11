@@ -4,14 +4,14 @@
 #include <ctime>
 #include <cstring>
 #include "point.hpp"
-//#include "matrix.hpp"
-#include "matrix.cpp"
+//include "matrix.hpp"
+#include "matrix.cpp" // Клятi шаблоны, небамбит
 #include "frame.hpp"
 #include "mesh.hpp"
 
 using namespace std;
 
-double T_z = 100. + 273.15; // Температура жидкости внутри трубы
+double T_z = 100. + 273.15;   // Температура жидкости внутри трубы
 double T_beg = 30. + 273.15;  // Начальная температура пластины
 double dt = 0.2;
 double time_end = 10;
@@ -51,7 +51,8 @@ int main(int argc, char *argv[]) {
     to_file = true;
   }
 
-
+  Matrix<double> test(10,10);
+  test.print();
   time_t meshing_time_begin = clock();
   // Длины сторон
   double side_len[] = {6., 8., 2., 4.};
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
     fout_nonstat << endl;
   }
   //
-  for (int i = 0; i < n_steps; i++) {
+  for (unsigned i = 0; i < n_steps; i++) {
     curr_time += dt;
     pair<Matrix<double>, vector<double> >& sle_nonstat = ms_nonstat.form_sle_nonstat(T_z, sigm, dt);
     vector<double>& gauss_res_nonstat  = gauss(sle_nonstat.first, sle_nonstat.second);

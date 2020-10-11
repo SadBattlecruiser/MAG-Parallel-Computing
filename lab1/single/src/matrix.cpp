@@ -1,9 +1,8 @@
-#include "matrix.hpp"
+#include <matrix.hpp>
 //#include <iostream>
 //#include <fstream>
 
 using namespace std;
-
 /*template <typename T>
 Matrix<T>::Matrix(const unsigned rows, const unsigned cols) {
   rows_ = rows;
@@ -170,9 +169,5 @@ vector<T>& gauss(const Matrix<T>& l_matr, const vector<T>& r_vect) {
     }
     ret_vect[size_-i-1] = r_vect_[size_-i-1] - sum;
   }
-  /*cout << "After backward in gauss:" << endl;
-  for (unsigned i = 0; i < size_; i++) {
-    cout << ret_vect[i] << endl;
-  }*/
   return ret_vect;
 }
