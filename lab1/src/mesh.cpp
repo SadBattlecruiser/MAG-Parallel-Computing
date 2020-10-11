@@ -11,9 +11,6 @@ Mesh::Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const dou
   if (Symmetry) {
     std::vector<double> side_len = frame.get_side_len();
     sym_ = true;
-
-    cout << "side_len: " << side_len[0] << ' ' << side_len[1] << ' '<< side_len[2] << ' '<< side_len[3] << ' '<< endl;
-
     N_xo_ = N_x;
     x_step_ = side_len[1] / (2*N_xo_);
     N_yo_ = N_y;
@@ -46,7 +43,7 @@ Mesh::Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const dou
     throw "symmetry=false in Mesh";
 };
 
-pair<Matrix<double>, vector<double> >& Mesh::form_sle(const double T_z) const {
+pair<Matrix<double>, vector<double> >& Mesh::form_sle_stat(const double T_z) const {
   Matrix<double> ret_matr(N_nodes_, N_nodes_);
   ret_matr.fill(0);
   vector<double> ret_vect(N_nodes_);
@@ -93,13 +90,17 @@ pair<Matrix<double>, vector<double> >& Mesh::form_sle(const double T_z) const {
   }
   // Ножняя грань dT/dy = T т.к.
   for (unsigned i = 0; i < N_xo_; ++i) {
-    ret_matr[mesh_[0][i].num][mesh_[0][i].num] += y_step_ + 1;
-    ret_matr[mesh_[0][i].num][mesh_[1][i].num] += 1;
+    //ret_matr[mesh_[0][i].num][mesh_[0][i].num] += y_step_ + 1;
+    //ret_matr[mesh_[0][i].num][mesh_[1][i].num] += 1;
+    ret_matr[mesh_[0][i].num][mesh_[0][i].num] += 1;
+    ret_vect[mesh_[0][i].num] += 20;
   }
   // Левая грань dT/dx = T т.к.
   for (unsigned i = 0; i < N_yo_; ++i) {
-    ret_matr[mesh_[i][0].num][mesh_[i][0].num] += x_step_ + 1;
-    ret_matr[mesh_[i][0].num][mesh_[i][1].num] += 1;
+    //ret_matr[mesh_[i][0].num][mesh_[i][0].num] += x_step_ + 1;
+    //ret_matr[mesh_[i][0].num][mesh_[i][1].num] += 1;
+    ret_matr[mesh_[i][0].num][mesh_[i][0].num] += 1;
+    ret_vect[mesh_[i][0].num] += 20;
   }
   // Для симметричных попробуем не трогать те точки, в которых уже другие ГУ
   // Правая грань dT/dx = 0 т.к. симметрия
@@ -113,6 +114,79 @@ pair<Matrix<double>, vector<double> >& Mesh::form_sle(const double T_z) const {
     ret_matr[mesh_[N_yo_ - 1][i].num][mesh_[N_yo_ - 2][i].num] += -1;
   }
   //cout << "test4.4\n" << endl;
+  return *(new pair<Matrix<double>, vector<double> >(ret_matr, ret_vect));
+}
+
+pair<Matrix<double>, vector<double> >& Mesh::form_sle_nonstat(const double T_z, const double sigm, const double dt) const {
+  Matrix<double> ret_matr(N_nodes_, N_nodes_);
+  ret_matr.fill(0);
+  vector<double> ret_vect(N_nodes_);
+  //cout << "test4.1\n" << endl;
+  // Сначала заполняем матрицу для всех узлов, кроме границ. Вектор не трогаем, там уже 0
+  // Сначала длинные массивы - не упирающиеся в вырез
+  for (unsigned i = 1; i < N_yi_ - 1; ++i) {
+    for (unsigned j = 1; j < N_xo_ - 1; ++j) {
+      ret_matr[mesh_[i][j].num][mesh_[i-1][j].num] = -sigm * dt / (x_step_*x_step_);
+      ret_matr[mesh_[i][j].num][mesh_[i+1][j].num] = -sigm * dt / (x_step_*x_step_);
+      ret_matr[mesh_[i][j].num][mesh_[i][j].num] = 1 + 2 * sigm * dt * (1/(x_step_*x_step_) + 1/(y_step_*y_step_));
+      ret_matr[mesh_[i][j].num][mesh_[i][j-1].num] = -sigm * dt / (y_step_*y_step_);
+      ret_matr[mesh_[i][j].num][mesh_[i][j+1].num] = -sigm * dt / (y_step_*y_step_);
+      ret_vect[mesh_[i][j].num] += mesh_[i][j].T;
+    }
+  }
+  // Дальше короткие - которые упираются в вырез
+  for (unsigned i = N_yi_ - 1; i < N_yo_ - 1; ++i) {
+    for (unsigned j = 1; j < N_xi_ - 1; ++j) {
+      ret_matr[mesh_[i][j].num][mesh_[i-1][j].num] = -sigm * dt / (x_step_*x_step_);
+      ret_matr[mesh_[i][j].num][mesh_[i+1][j].num] = -sigm * dt / (x_step_*x_step_);
+      ret_matr[mesh_[i][j].num][mesh_[i][j].num] = 1 + 2 * sigm * dt * (1/(x_step_*x_step_) + 1/(y_step_*y_step_));
+      ret_matr[mesh_[i][j].num][mesh_[i][j-1].num] = -sigm * dt / (y_step_*y_step_);
+      ret_matr[mesh_[i][j].num][mesh_[i][j+1].num] = -sigm * dt / (y_step_*y_step_);
+      ret_vect[mesh_[i][j].num] += mesh_[i][j].T;
+    }
+  }
+  // Теперь ГУ
+  // На внутренней границе - температура
+  for (unsigned i = N_xi_ - 1; i < N_xo_; ++i) {
+    ret_matr[mesh_[N_yi_ - 1][i].num][mesh_[N_yi_ - 1][i].num] += 1;
+    ret_vect[mesh_[N_yi_ - 1][i].num] += T_z;
+  }
+  for (unsigned i = N_yi_; i < N_yo_; ++i) {
+    ret_matr[mesh_[i][N_xi_ - 1].num][mesh_[i][N_xi_ - 1].num] += 1;
+    ret_vect[mesh_[i][N_xi_ - 1].num] += T_z;
+  }
+  // Ножняя грань dT/dy = T т.к.
+  for (unsigned i = 0; i < N_xo_; ++i) {
+    //ret_matr[mesh_[0][i].num][mesh_[0][i].num] += y_step_ + 1;
+    //ret_matr[mesh_[0][i].num][mesh_[1][i].num] += 1;
+    ret_matr[mesh_[0][i].num][mesh_[0][i].num] += 1;
+    ret_vect[mesh_[0][i].num] += 293.15;
+  }
+  // Левая грань dT/dx = T т.к.
+  for (unsigned i = 0; i < N_yo_; ++i) {
+    //ret_matr[mesh_[i][0].num][mesh_[i][0].num] += x_step_ + 1;
+    //ret_matr[mesh_[i][0].num][mesh_[i][1].num] += 1;
+    ret_matr[mesh_[i][0].num][mesh_[i][0].num] += 1;
+    ret_vect[mesh_[i][0].num] += 293.15;
+  }
+  // Для симметричных попробуем не трогать те точки, в которых уже другие ГУ
+  // Правая грань dT/dx = 0 т.к. симметрия
+  for (unsigned i = 1; i < N_yi_ - 1; ++i) {
+    ret_matr[mesh_[i][N_xo_ - 1].num][mesh_[i][N_xo_ - 1].num] += 1;
+    ret_matr[mesh_[i][N_xo_ - 1].num][mesh_[i][N_xo_ - 2].num] += -1;
+  }
+  // Верхняя грань dT/dy = 0 т.к. симметрия
+  for (unsigned i = 1; i < N_xi_ - 1; ++i) {
+    ret_matr[mesh_[N_yo_ - 1][i].num][mesh_[N_yo_ - 1][i].num] += 1;
+    ret_matr[mesh_[N_yo_ - 1][i].num][mesh_[N_yo_ - 2][i].num] += -1;
+  }
+
+  //cout << "---------" << endl;
+  //for (unsigned i = 0; i < N_nodes_; i++) {
+  //  cout << ret_vect[i] << endl;
+  //}
+  //cout << "---------" << endl;
+
   return *(new pair<Matrix<double>, vector<double> >(ret_matr, ret_vect));
 }
 
@@ -133,6 +207,22 @@ void Mesh::from_file(ifstream& file) {
   for (unsigned i = N_yi_; i < N_yo_; ++i) {
     for (unsigned j = 0; j < N_xi_; ++j) {
       mesh_[i][j].T = res_vect[mesh_[i][j].num];
+    }
+  }
+}
+
+void Mesh::from_vector(const vector<double>& vect) {
+  // Для каждого узла дергаем температуру из вектора по номеру узла
+  // Сначала длинные массивы - не упирающиеся в вырез
+  for (unsigned i = 0; i < N_yi_; ++i) {
+    for (unsigned j = 0; j < N_xo_; ++j) {
+      mesh_[i][j].T = vect[mesh_[i][j].num];
+    }
+  }
+  // Дальше короткие - которые упираются в вырез
+  for (unsigned i = N_yi_; i < N_yo_; ++i) {
+    for (unsigned j = 0; j < N_xi_; ++j) {
+      mesh_[i][j].T = vect[mesh_[i][j].num];
     }
   }
 }
@@ -166,15 +256,6 @@ void Mesh::print_cheme() const {
 };
 
 void Mesh::print_T() const {
-  // Размеры
-  cout << "x_step: " << x_step_ << endl;
-  cout << "y_step: " << y_step_ << endl;
-  cout << "N_xo: " << N_xo_ << endl;
-  cout << "N_yo: " << N_yo_ << endl;
-  cout << "N_xi: " << N_xi_ << endl;
-  cout << "N_yi: " << N_yi_ << endl;
-  cout << "N_nodes: " << N_nodes_ << endl;
-
   // Сначала длинные массивы - не упирающиеся в вырез
   for (unsigned i = 0; i < N_yi_; ++i) {
     for (unsigned j = 0; j < N_xo_; ++j) {
@@ -190,6 +271,25 @@ void Mesh::print_T() const {
       cout << mesh_[i][j].T << ' ';
     }
     cout << endl;
+  }
+};
+
+void Mesh::file_T(ofstream& fout) const {
+  // Сначала длинные массивы - не упирающиеся в вырез
+  for (unsigned i = 0; i < N_yi_; ++i) {
+    for (unsigned j = 0; j < N_xo_; ++j) {
+      //cout << '+';
+      fout << mesh_[i][j].T << ' ';
+    }
+    fout << endl;
+  }
+  // Дальше короткие - которые упираются в вырез
+  for (unsigned i = N_yi_; i < N_yo_; ++i) {
+    for (unsigned j = 0; j < N_xi_; ++j) {
+      //cout << '+';
+      fout << mesh_[i][j].T << ' ';
+    }
+    fout << endl;
   }
 };
 

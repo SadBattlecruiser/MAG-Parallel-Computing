@@ -1,10 +1,11 @@
 #ifndef MESH_HPP
 #define MESH_HPP
 
+#include <vector>
+#include <fstream>
 #include "point.hpp"
 #include "frame.hpp"
 #include "matrix.hpp"
-#include <vector>
 
 using namespace std;
 
@@ -14,10 +15,13 @@ class Mesh {
 public:
   // Подразумевается, что стороны выреза нацело делятся на получающиеся шаги сетки. Иначе бобо
   Mesh(const Frame& frame, const unsigned N_x, const unsigned N_y, const double T0 = 0, const bool Symmetry = true);
-  pair<Matrix<double>, vector<double> >& form_sle(const double T_z) const;  // Сама слау
-  void from_file(ifstream& file); // Считать вектор из файла и щалать по нему температуры
-  void print_cheme() const;
-  void print_T() const;
+  pair<Matrix<double>, vector<double> >& form_sle_stat(const double T_z) const;  // Сама слау для стационарного уравнения
+  pair<Matrix<double>, vector<double> >& form_sle_nonstat(const double T_z, const double sigm, const double dt) const;  // Сама слау для нестационарного уравнения
+  void from_vector(const vector<double>& vect); // Задать темпеаратуру по вектору правой части
+  void from_file(ifstream& file);               // Считать вектор из файла и задать по нему температуры
+  void print_cheme() const;                     // Распечатать номера узлов
+  void print_T() const;                         // Распечатать температуры
+  void file_T(ofstream& fout) const;            // Распечатать температуры
   ~Mesh();
 private:
   bool sym_;
