@@ -4,10 +4,11 @@
 #include <ctime>
 #include <cstring>
 #include "point.hpp"
-//include "matrix.hpp"
 #include "matrix.cpp" // Клятi шаблоны, небамбит
 #include "frame.hpp"
 #include "mesh.hpp"
+
+#include <omp.h>
 
 using namespace std;
 
@@ -30,15 +31,12 @@ int main(int argc, char *argv[]) {
     sscanf(argv[2], "%lf", &dt);
     sscanf(argv[3], "%u", &N_x);
     sscanf(argv[4], "%u", &N_y);
-    cout << time_end << ' ' << dt << ' ' << N_x << endl;
   }
   else if (argc == 6 && !strcmp(argv[5], "-c")) {
     sscanf(argv[1], "%lf", &time_end);
     sscanf(argv[2], "%lf", &dt);
     sscanf(argv[3], "%u", &N_x);
     sscanf(argv[4], "%u", &N_y);
-    cout << time_end << ' ' << dt << ' ' << N_x << endl;
-    cout << "-c" << endl;
     to_console = true;
   }
   else if (argc == 6 && !strcmp(argv[5], "-f")) {
@@ -46,8 +44,6 @@ int main(int argc, char *argv[]) {
     sscanf(argv[2], "%lf", &dt);
     sscanf(argv[3], "%u", &N_x);
     sscanf(argv[4], "%u", &N_y);
-    cout << time_end << ' ' << dt << ' ' << N_x << endl;
-    cout << "-f" << endl;
     to_file = true;
   }
 
@@ -135,6 +131,7 @@ int main(int argc, char *argv[]) {
   cout << "stationary_gauss_time: " << stationary_gauss_time << endl;
   cout << "stationary_time: " << stationary_time << endl;
   cout << "total_time: " << total_time << endl;
+  //cout << "total_time: " << meshing_time +  nonstationary_time + stationary_time<< endl;
 
   return 0;
 };
