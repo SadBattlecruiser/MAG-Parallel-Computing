@@ -20,6 +20,7 @@ public:
   void from_vector(const vector<double>& vect); // Задать темпеаратуру по вектору правой части
   void from_file(ifstream& file);               // Считать вектор из файла и задать по нему температуры
   void print_cheme() const;                     // Распечатать номера узлов
+  unsigned get_N_nodes() const;
   void print_T() const;                         // Распечатать температуры
   void file_T(ofstream& fout) const;            // Распечатать температуры
   ~Mesh();

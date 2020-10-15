@@ -1,17 +1,6 @@
 #include <matrix.hpp>
-//#include <iostream>
-//#include <fstream>
 
 using namespace std;
-/*template <typename T>
-Matrix<T>::Matrix(const unsigned rows, const unsigned cols) {
-  rows_ = rows;
-  cols_ = cols;
-  arr_ = new T*[rows_];
-  for (unsigned i = 0; i < rows_; i++) {
-    arr_[i] = new T[cols_];
-  };
-};*/
 
 template <typename T>
 Matrix<T>::Matrix(const unsigned rows, const unsigned cols) {
@@ -35,13 +24,10 @@ unsigned Matrix<T>::get_cols() const {
 
 template <typename T>
 void Matrix<T>::fill(const T& value) {
-  //cout << "IN FILL" << value << endl;
   for (unsigned i = 0; i < rows_; i++) {
     for (unsigned j = 0; j < cols_; j++) {
       arr_[i][j] = value;
-      //cout << arr_[i][j] << ' ';
     };
-    //cout << endl;
   };
 };
 
@@ -59,6 +45,8 @@ void Matrix<T>::set_diag_to_one(const unsigned row_index) {
     throw ("rows != cols in set_diag_to_one\n");
   }
   T temp = arr_[row_index][row_index];
+  // От этого только медленнее, как оказалось
+  //#pragma omp parallel for
   for (unsigned i = 0; i < cols_; i++) {
     arr_[row_index][i] = arr_[row_index][i] / temp;
   }
@@ -70,6 +58,8 @@ void Matrix<T>::set_diag_to_one_r(const unsigned row_index) {
     cout << "rows != cols in set_diag_to_one_r" << endl;
     throw ("rows != cols in set_diag_to_one_r\n");
   }
+  // От этого только медленнее, как оказалось
+  //#pragma omp parallel for
   for (unsigned i = row_index + 1; i < cols_; i++) {
     arr_[row_index][i] = arr_[row_index][i] / arr_[row_index][row_index];
   }
@@ -100,24 +90,18 @@ void Matrix<T>::print() const {
 
 template <typename T>
 void Matrix<T>::to_file(ofstream& file) const {
-  //cout << "IN_FILE" << endl;
   for (unsigned i = 0; i < rows_; i++) {
     file << arr_[i][0];
     for (unsigned j = 1; j < cols_; j++) {
-      //cout << i << ' ' << j << endl;
-      //cout << arr_[i][j] << ' ';
       file << ',' << arr_[i][j];
     }
-    //cout << endl;
     file << endl;
   }
 };
 
 template <typename T>
 void Matrix<T>::from_file(ifstream& file) {
-  //cout << "FROM_FILE" << endl;
   for (unsigned i = 0; i < rows_; i++) {
-    //file >> arr_[i][0];
     for (unsigned j = 0; j < cols_; j++) {
       file >>  arr_[i][j];
     }
@@ -129,16 +113,10 @@ vector<T>& Matrix<T>::operator[](const unsigned index) {
   return arr_[index];
 };
 
-/*template <typename T>
-Matrix<T>::~Matrix() {
-  for (unsigned i = 0; i < rows_; i++) {
-    delete arr_[i];
-  };
-  delete[] arr_;
-}*/
-
 template <typename T>
 vector<T>& gauss(const Matrix<T>& l_matr, const vector<T>& r_vect) {
+
+
   unsigned size_ = r_vect.size();
   if (l_matr.get_cols() != l_matr.get_rows()) {
     cout << "not square matrix in gauss" << endl;
@@ -151,10 +129,15 @@ vector<T>& gauss(const Matrix<T>& l_matr, const vector<T>& r_vect) {
   Matrix<T> l_matr_ = l_matr;
   vector<T> r_vect_ = r_vect;
   vector<T>& ret_vect = *(new vector<T>(size_));
-  // Прямой ход
+
+  // Прямой ход, явно зададим количество потоков
+  //omp_set_dynamic(0);
+  //omp_set_num_threads(4);
+  //unsigned n_of_thr_1 = 1;
   #pragma omp parallel for
-  // Не думаю, что есть смысл параллелить внутренний цикл -- все равно ядер не хватит
   for (unsigned i = 0; i < size_; i++) {
+    //n_of_thr_1 = omp_get_num_threads();
+    // Не думаю, что есть смысл параллелить внутренний цикл -- все равно ядер не хватит
     for (unsigned j = 0; j < i; j++) {
       r_vect_[i] -= r_vect_[j] * l_matr_[i][j];
       l_matr_.plus_row(i, j, -l_matr_[i][j]);
@@ -162,15 +145,20 @@ vector<T>& gauss(const Matrix<T>& l_matr, const vector<T>& r_vect) {
     r_vect_[i] /= l_matr_[i][i];
     l_matr_.set_diag_to_one_r(i);
   }
+  //cout << "gauss for_1 num_of_threads: " <<  n_of_thr_1 << endl;
+
   // Обратный ход
+  //unsigned n_of_thr_2 = 1;
   for (unsigned i = 0; i < size_; i++) {
     T sum = 0;
     #pragma omp parallel for
     // Здесь нельзя трогать наружный цикл
     for (unsigned j = 0; j < i; j++) {
+      //n_of_thr_2 = omp_get_num_threads();
       sum += l_matr_[size_-i-1][size_-j-1] * ret_vect[size_-j-1];
     }
     ret_vect[size_-i-1] = r_vect_[size_-i-1] - sum;
   }
+  //cout << "gauss for_2 num_of_threads: " << n_of_thr_2 << endl;
   return ret_vect;
 }

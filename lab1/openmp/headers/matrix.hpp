@@ -1,6 +1,7 @@
 #ifndef MATRIX_HPP
 #define MATRIX_HPP
 
+#include <omp.h>
 #include <iostream>
 #include <fstream>
 #include <vector>

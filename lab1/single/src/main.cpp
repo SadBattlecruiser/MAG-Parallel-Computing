@@ -23,6 +23,7 @@ unsigned N_y = 12; // Узлов по y
 int main(int argc, char *argv[]) {
   bool to_console = false;
   bool to_file = false;
+  bool compare_flag = false;
   // Читаем что передали при вызове
   // Если ничего не передали, настройки по умолчанию
   if (argc == 5) {
@@ -30,15 +31,12 @@ int main(int argc, char *argv[]) {
     sscanf(argv[2], "%lf", &dt);
     sscanf(argv[3], "%u", &N_x);
     sscanf(argv[4], "%u", &N_y);
-    cout << time_end << ' ' << dt << ' ' << N_x << endl;
   }
   else if (argc == 6 && !strcmp(argv[5], "-c")) {
     sscanf(argv[1], "%lf", &time_end);
     sscanf(argv[2], "%lf", &dt);
     sscanf(argv[3], "%u", &N_x);
     sscanf(argv[4], "%u", &N_y);
-    cout << time_end << ' ' << dt << ' ' << N_x << endl;
-    cout << "-c" << endl;
     to_console = true;
   }
   else if (argc == 6 && !strcmp(argv[5], "-f")) {
@@ -46,9 +44,15 @@ int main(int argc, char *argv[]) {
     sscanf(argv[2], "%lf", &dt);
     sscanf(argv[3], "%u", &N_x);
     sscanf(argv[4], "%u", &N_y);
-    cout << time_end << ' ' << dt << ' ' << N_x << endl;
-    cout << "-f" << endl;
     to_file = true;
+  }
+  // Специально для скрипта питона
+  else if (argc == 6 && !strcmp(argv[5], "-d")) {
+    sscanf(argv[1], "%lf", &time_end);
+    sscanf(argv[2], "%lf", &dt);
+    sscanf(argv[3], "%u", &N_x);
+    sscanf(argv[4], "%u", &N_y);
+    compare_flag = true;
   }
 
   time_t meshing_time_begin = clock();
@@ -128,13 +132,17 @@ int main(int argc, char *argv[]) {
   time_t stationary_time = clock() - nonstationary_time;
 
   time_t total_time = clock();
-  cout << "meshing_time: " << meshing_time << endl;
-  cout << "nonstationary_time: " << nonstationary_time << endl;
-  cout << "\tavg step time: " << nonstationary_time * dt / time_end << endl;
-  cout << "stationary_sle_time: " << stationary_sle_time << endl;
-  cout << "stationary_gauss_time: " << stationary_gauss_time << endl;
-  cout << "stationary_time: " << stationary_time << endl;
-  cout << "total_time: " << total_time << endl;
-
+  if (compare_flag) {
+    cout << ms_nonstat.get_N_nodes() << ' ' << nonstationary_time << ' ' << nonstationary_time * dt / time_end;
+  }
+  else {
+    cout << "meshing_time: " << meshing_time << endl;
+    cout << "nonstationary_time: " << nonstationary_time << endl;
+    cout << "\tavg_step time: " << nonstationary_time * dt / time_end << endl;
+    cout << "stationary_sle_time: " << stationary_sle_time << endl;
+    cout << "stationary_gauss_time: " << stationary_gauss_time << endl;
+    cout << "stationary_time: " << stationary_time << endl;
+    cout << "total_time: " << total_time << endl;
+  }
   return 0;
 };

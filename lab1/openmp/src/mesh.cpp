@@ -255,6 +255,10 @@ void Mesh::print_cheme() const {
   }
 };
 
+unsigned Mesh::get_N_nodes() const {
+  return N_nodes_;
+};
+
 void Mesh::print_T() const {
   // Сначала длинные массивы - не упирающиеся в вырез
   for (unsigned i = 0; i < N_yi_; ++i) {
