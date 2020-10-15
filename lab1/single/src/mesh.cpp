@@ -93,14 +93,14 @@ pair<Matrix<double>, vector<double> >& Mesh::form_sle_stat(const double T_z) con
     //ret_matr[mesh_[0][i].num][mesh_[0][i].num] += y_step_ + 1;
     //ret_matr[mesh_[0][i].num][mesh_[1][i].num] += 1;
     ret_matr[mesh_[0][i].num][mesh_[0][i].num] += 1;
-    ret_vect[mesh_[0][i].num] += 20;
+    ret_vect[mesh_[0][i].num] += 293.15;
   }
   // Левая грань dT/dx = T т.к.
   for (unsigned i = 0; i < N_yo_; ++i) {
     //ret_matr[mesh_[i][0].num][mesh_[i][0].num] += x_step_ + 1;
     //ret_matr[mesh_[i][0].num][mesh_[i][1].num] += 1;
     ret_matr[mesh_[i][0].num][mesh_[i][0].num] += 1;
-    ret_vect[mesh_[i][0].num] += 20;
+    ret_vect[mesh_[i][0].num] += 293.15;
   }
   // Для симметричных попробуем не трогать те точки, в которых уже другие ГУ
   // Правая грань dT/dx = 0 т.к. симметрия

@@ -22,6 +22,9 @@ unsigned N_y = 12; // Узлов по y
 
 
 int main(int argc, char *argv[]) {
+  // Выставляем количество потоков
+  omp_set_dynamic(0);
+  omp_set_num_threads(4);
 
   bool to_console = false;
   bool to_file = false;
@@ -56,10 +59,6 @@ int main(int argc, char *argv[]) {
     sscanf(argv[4], "%u", &N_y);
     compare_flag = true;
   }
-  // Выставляем количество потоков
-  omp_set_dynamic(0);
-  omp_set_num_threads(4);
-
   time_t meshing_time_begin = clock();
   // Длины сторон
   double side_len[] = {6., 8., 2., 4.};
@@ -115,6 +114,7 @@ int main(int argc, char *argv[]) {
   time_t nonstationary_time = clock() - meshing_time;
 
   // Стаиионарное решение
+  /*
   Mesh ms_stat(tf, N_x, N_y, T_beg);
   time_t stationary_sle_beg = clock();
   pair<Matrix<double>, vector<double> >& sle_stat = ms_stat.form_sle_stat(T_z);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
     fout_stat.close();
   }
   time_t stationary_time = clock() - nonstationary_time;
-
+  */
   time_t total_time = clock();
   if (compare_flag) {
     cout << ms_nonstat.get_N_nodes() << ' ' << nonstationary_time << ' ' << nonstationary_time * dt / time_end;
@@ -144,9 +144,9 @@ int main(int argc, char *argv[]) {
     cout << "meshing_time: " << meshing_time << endl;
     cout << "nonstationary_time: " << nonstationary_time << endl;
     cout << "\tavg_step time: " << nonstationary_time * dt / time_end << endl;
-    cout << "stationary_sle_time: " << stationary_sle_time << endl;
-    cout << "stationary_gauss_time: " << stationary_gauss_time << endl;
-    cout << "stationary_time: " << stationary_time << endl;
+    //cout << "stationary_sle_time: " << stationary_sle_time << endl;
+    //cout << "stationary_gauss_time: " << stationary_gauss_time << endl;
+    //cout << "stationary_time: " << stationary_time << endl;
     cout << "total_time: " << total_time << endl;
   }
   return 0;

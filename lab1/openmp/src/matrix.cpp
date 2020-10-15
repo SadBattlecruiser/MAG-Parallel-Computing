@@ -69,6 +69,8 @@ void Matrix<T>::set_diag_to_one_r(const unsigned row_index) {
 
 template <typename T>
 void Matrix<T>::plus_row(const unsigned mod_row_index, const unsigned plus_row_index, const double coeff) {
+  // Очень плохо, не параллель!!!
+  //#pragma omp parallel for
   for (unsigned i = 0; i < cols_; i++) {
     arr_[mod_row_index][i] += arr_[plus_row_index][i] * coeff;
   }
@@ -115,8 +117,6 @@ vector<T>& Matrix<T>::operator[](const unsigned index) {
 
 template <typename T>
 vector<T>& gauss(const Matrix<T>& l_matr, const vector<T>& r_vect) {
-
-
   unsigned size_ = r_vect.size();
   if (l_matr.get_cols() != l_matr.get_rows()) {
     cout << "not square matrix in gauss" << endl;
@@ -130,35 +130,29 @@ vector<T>& gauss(const Matrix<T>& l_matr, const vector<T>& r_vect) {
   vector<T> r_vect_ = r_vect;
   vector<T>& ret_vect = *(new vector<T>(size_));
 
-  // Прямой ход, явно зададим количество потоков
-  //omp_set_dynamic(0);
-  //omp_set_num_threads(4);
-  //unsigned n_of_thr_1 = 1;
-  #pragma omp parallel for
+  // Прямой ход
+  // Внешний нельзя, важен порядок
   for (unsigned i = 0; i < size_; i++) {
-    //n_of_thr_1 = omp_get_num_threads();
-    // Не думаю, что есть смысл параллелить внутренний цикл -- все равно ядер не хватит
+    #pragma omp parallel for
     for (unsigned j = 0; j < i; j++) {
+      #pragma omp atomic
       r_vect_[i] -= r_vect_[j] * l_matr_[i][j];
       l_matr_.plus_row(i, j, -l_matr_[i][j]);
     }
     r_vect_[i] /= l_matr_[i][i];
     l_matr_.set_diag_to_one_r(i);
   }
-  //cout << "gauss for_1 num_of_threads: " <<  n_of_thr_1 << endl;
 
   // Обратный ход
-  //unsigned n_of_thr_2 = 1;
   for (unsigned i = 0; i < size_; i++) {
     T sum = 0;
     #pragma omp parallel for
     // Здесь нельзя трогать наружный цикл
     for (unsigned j = 0; j < i; j++) {
-      //n_of_thr_2 = omp_get_num_threads();
+      #pragma omp atomic
       sum += l_matr_[size_-i-1][size_-j-1] * ret_vect[size_-j-1];
     }
     ret_vect[size_-i-1] = r_vect_[size_-i-1] - sum;
   }
-  //cout << "gauss for_2 num_of_threads: " << n_of_thr_2 << endl;
   return ret_vect;
 }
