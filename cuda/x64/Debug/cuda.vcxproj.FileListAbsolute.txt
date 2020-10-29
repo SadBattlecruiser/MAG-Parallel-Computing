@@ -1,0 +1,2 @@
+C:\Study\Parallel-Computing\cuda\x64\Debug\cuda.exe
+C:\Study\Parallel-Computing\cuda\x64\Debug\cuda.pdb
