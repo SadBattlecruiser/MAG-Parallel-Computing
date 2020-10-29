@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -std=c++11 -fopenmp
+CFLAGS=-c -Wall -std=c++11 -fopenmp -O3
 LFLAGS=-fopenmp
 HEADERSPATH= -I .\\headers
 
