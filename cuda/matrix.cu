@@ -3,7 +3,7 @@
 //#include <fstream>
 
 using namespace std;
- 
+
 Matrix::Matrix(const size_t rows, const size_t cols) {
   rows_ = rows;
   cols_ = cols;
@@ -14,20 +14,20 @@ Matrix::Matrix(const Matrix& rmatr) {
     rows_ = rmatr.get_rows();
     cols_ = rmatr.get_cols();
     arr_ = new double[rows_ * cols_];
-    for (size_t i = 0; i < rows_; i++) { 
+    for (size_t i = 0; i < rows_; i++) {
         for (size_t j = 0; j < cols_; j++) {
             arr_[i * cols_ + j] = rmatr.get_arr()[i*cols_ + j];
-        }        
+        }
     }
 
 }
 
- 
+
 size_t Matrix::get_rows() const {
     return rows_;
 }
 
- 
+
 size_t Matrix::get_cols() const {
     return cols_;
 }
@@ -36,7 +36,7 @@ const double* Matrix::get_arr() const{
     return arr_;
 }
 
- 
+
 void Matrix::fill(const double& value) {
   //cout << "IN FILL" << value << endl;
   for (size_t i = 0; i < rows_; i++) {
@@ -48,7 +48,7 @@ void Matrix::fill(const double& value) {
   };
 };
 
- 
+
 void Matrix::swap_rows(const size_t first, const size_t second) {
   /*vector<double> temp = arr_[first];
   arr_[first] = arr_[second];
@@ -60,7 +60,7 @@ void Matrix::swap_rows(const size_t first, const size_t second) {
   }
 };
 
- 
+
 void Matrix::set_diag_to_one(const size_t row_index) {
   if (rows_ != cols_) {
     cout << "rows != cols in set_diag_to_one" << endl;
@@ -72,7 +72,7 @@ void Matrix::set_diag_to_one(const size_t row_index) {
   }
 };
 
- 
+
 void Matrix::set_diag_to_one_r(const size_t row_index) {
   if (rows_ != cols_) {
     cout << "rows != cols in set_diag_to_one_r" << endl;
@@ -85,7 +85,7 @@ void Matrix::set_diag_to_one_r(const size_t row_index) {
 };
 
 
- 
+
 void Matrix::plus_row(const size_t mod_row_index, const size_t plus_row_index, const double coeff) {
   for (size_t i = 0; i < cols_; i++) {
     arr_[mod_row_index * cols_ + i] += arr_[plus_row_index * cols_ + i] * coeff;
@@ -93,7 +93,7 @@ void Matrix::plus_row(const size_t mod_row_index, const size_t plus_row_index, c
 };
 
 
- 
+
 void Matrix::print() const {
   cout << "IN PRINT" << endl;
   cout << "rows_: " << rows_ << " cols_: " << cols_ << endl;
@@ -106,7 +106,7 @@ void Matrix::print() const {
   }
 }
 
- 
+
 void Matrix::to_file(ofstream& file) const {
   //cout << "IN_FILE" << endl;
   for (size_t i = 0; i < rows_; i++) {
@@ -121,7 +121,7 @@ void Matrix::to_file(ofstream& file) const {
   }
 };
 
- 
+
 void Matrix::from_file(ifstream& file) {
   //cout << "FROM_FILE" << endl;
   for (size_t i = 0; i < rows_; i++) {
@@ -132,7 +132,7 @@ void Matrix::from_file(ifstream& file) {
   }
 }
 
- 
+
 double* Matrix::operator[](const size_t index) {
   return arr_ + index*cols_;
 };
@@ -156,8 +156,6 @@ __global__ void fillVecKernel(double* vec, size_t size, double val) {
         vec[idx] = val;
     }
 }
-
-
 __global__ void calculateMCoeffKernel(double* l_matr, size_t size, size_t i, size_t j, double* mcoeff) {
     *mcoeff = l_matr[i * size + j] / l_matr[j * size + j];
 }
@@ -166,7 +164,6 @@ __global__ void plusRowKernel(double* l_matr, double* r_vec, size_t size,
                               size_t mr_idx, size_t pr_idx, double* mcoeff) {
     size_t idx = threadIdx.x + blockIdx.x *blockDim.x;
     if (idx < size) {
-        //l_matr[mr_idx * size + idx] -= l_matr[pr_idx * size + idx] * l_matr[pr_idx * size + pr_idx];
         l_matr[mr_idx * size + idx] -= l_matr[pr_idx * size + idx] * (*mcoeff);
     }
 }
@@ -196,21 +193,12 @@ __global__ void rvecDiagDivKernel(double* r_vec, double* diag_vec, double size) 
 
 vector<double>& gauss_cuda(const Matrix& l_matr, const vector<double>& r_vect) {
     size_t size = r_vect.size();
-    if (l_matr.get_cols() != l_matr.get_rows()) {
-        cout << "not square matrix in gauss" << endl;
-        throw ("not square matrix in gauss");
-    }
-    if (size != l_matr.get_rows()) {
-        cout << "l_matr size != r_vect size in gauss" << endl;
-        throw ("l_matr size != r_vect size in gauss");
-    }
     // Делаем копию вектора правой части в виде массива
     double* r_vec = new double[size];
     for (size_t i = 0; i < size; i++) {
         r_vec[i] = r_vect[i];
     }
-
-
+    // Количество блоков и тредов
     dim3 N_threads1(8);
     dim3 N_blocks1(size / 8 + 1);
     dim3 N_threads_once(1);
@@ -253,25 +241,6 @@ vector<double>& gauss_cuda(const Matrix& l_matr, const vector<double>& r_vect) {
     // И правый вектор
     rvecDiagDivKernel<<<N_blocks1, N_threads1 >>>(r_vec_dev, diag_vec_dev, size);
     cudaFree(diag_vec_dev);
-
-    //// Обратный ход
-    //for (size_t i = 0; i < size; i++) {
-    //    //setDiagToOneKernel << <N_blocks1, N_threads1 >> > (l_matr_dev, r_vec_dev, diag_vec_dev, size, i);
-    //    
-    //}
-
-    //// Лепим возвращаемый вектор
-    //double* ret_vec = new double[size];
-    //cudaMemcpy(ret_vec, ret_vec_dev, vec_size, cudaMemcpyDeviceToHost);
-    //vector<double> ret_vect;
-    //for (size_t i = 0; i < size; i++) {
-    //    ret_vect.push_back(ret_vec[i]);
-    //}
-    //// Возвращаем
-    delete[] r_vec;
-    //delete[] ret_vec;
-    //return ret_vect;
-
     // Обратный ход
     double* l_matr_host = new double[size*size];
     double* r_vec_host = new double[size];
@@ -285,5 +254,9 @@ vector<double>& gauss_cuda(const Matrix& l_matr, const vector<double>& r_vect) {
         }
         ret_vect[size - i - 1] = r_vec_host[size - i - 1] - sum;
     }
+    cudaFree(l_matr_dev);
+    cudaFree(r_vec_dev);
+    cudaFree(ret_vec_dev);
+    delete[] r_vec;
     return ret_vect;
 }

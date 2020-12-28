@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#N_nodes_data = pd.read_csv("N_nodes_compare_corei7_6500u.csv")
+N_nodes_data = pd.read_csv("N_nodes_compare_corei7_6500u.csv")
 #N_nodes_data = pd.read_csv("N_nodes_compare_corei5_3470.csv")
-N_nodes_data = pd.read_csv("N_nodes_compare.csv")
+#N_nodes_data = pd.read_csv("N_nodes_compare.csv")
 print(N_nodes_data)
 
 # Графики времени
