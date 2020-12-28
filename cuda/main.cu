@@ -5,7 +5,6 @@
 #include <cstring>
 #include "point.hpp"
 #include "matrix.hpp"
-//#include "matrix.cu" // Клятi шаблоны, небамбит
 #include "frame.hpp"
 #include "mesh.hpp"
 
@@ -94,7 +93,8 @@ int main(int argc, char *argv[]) {
   for (unsigned i = 0; i < n_steps; i++) {
     curr_time += dt;
     pair<Matrix, vector<double> >& sle_nonstat = ms_nonstat.form_sle_nonstat(T_z, sigm, dt);
-    vector<double>& gauss_res_nonstat  = gauss(sle_nonstat.first, sle_nonstat.second);
+    //vector<double>& gauss_res_nonstat  = gauss(sle_nonstat.first, sle_nonstat.second);
+    vector<double> gauss_res_nonstat = gauss_cuda(sle_nonstat.first, sle_nonstat.second);
     ms_nonstat.from_vector(gauss_res_nonstat);
     //
     if (to_console) {
@@ -112,27 +112,6 @@ int main(int argc, char *argv[]) {
   fout_nonstat.close();
   time_t nonstationary_time = clock() - meshing_time;
 
-  // Стаиионарное решение
-  Mesh ms_stat(tf, N_x, N_y, T_beg);
-  time_t stationary_sle_beg = clock();
-  pair<Matrix, vector<double> >& sle_stat = ms_stat.form_sle_stat(T_z);
-  time_t stationary_sle_time = clock() - stationary_sle_beg;
-  time_t stationary_gauss_beg = clock();
-  vector<double>& gauss_res_stat = gauss(sle_stat.first, sle_stat.second);
-  time_t stationary_gauss_time = clock() - stationary_gauss_beg;
-  ms_stat.from_vector(gauss_res_stat);
-  if (to_console) {
-    cout << "--------------------------------------" << endl;
-    cout << "Stationary solve:" << endl;
-    ms_stat.print_T();
-    cout << "--------------------------------------" << endl;
-  }
-  else if (to_file) {
-    ofstream fout_stat("stat.txt");
-    ms_stat.file_T(fout_stat);
-    fout_stat.close();
-  }
-  time_t stationary_time = clock() - nonstationary_time;
 
   time_t total_time = clock();
   if (compare_flag) {
@@ -142,10 +121,15 @@ int main(int argc, char *argv[]) {
     cout << "meshing_time: " << meshing_time << endl;
     cout << "nonstationary_time: " << nonstationary_time << endl;
     cout << "\tavg_step time: " << nonstationary_time * dt / time_end << endl;
-    cout << "stationary_sle_time: " << stationary_sle_time << endl;
-    cout << "stationary_gauss_time: " << stationary_gauss_time << endl;
-    cout << "stationary_time: " << stationary_time << endl;
     cout << "total_time: " << total_time << endl;
   }
+
+  // Сбрасываем девайс
+  auto cudaStatus = cudaDeviceReset();
+  if (cudaStatus != cudaSuccess) {
+      fprintf(stderr, "cudaDeviceReset failed!");
+      return 1;
+  }
+
   return 0;
 };

@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -std=c++11 -O3
+CFLAGS=-c -Wall -std=c++11
 HEADERSPATH= -I .\\headers
 
 all: point_o matrix_o frame_o mesh_o main_o
